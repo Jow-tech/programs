@@ -27,7 +27,7 @@ Oferecer uma plataforma digital para moradores reservarem espaços comuns (como 
 ### 2.1. Personas (Semana 01)
 
 <div align="center">
-  <img src="..\assets\PERSONA-PROJ1.png" width="75%" alt="Persona"><br>
+  <img src="..\assets\marcelotrimas.png" width="75%" alt="Persona"><br>
 </div>
 ### 2.2. User Stories (Semana 01)
 
