@@ -28,7 +28,7 @@ Oferecer uma plataforma digital para moradores reservarem espaços comuns (como 
 
 <div align="center">
     <small><strong style="font-size: 12px;">Persona;</strong></small><br>
-      <img src="/assets/marcelotrimas.png">
+      <img src="../assets/marcelotrimas.png">
     <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
 </div>
 ### 2.2. User Stories (Semana 01)
