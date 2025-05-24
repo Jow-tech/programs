@@ -1,36 +1,38 @@
-const db = require('../config/db');
+const pool = require('../config/database');
 
-class User {
-  static async getAll() {
-    const result = await db.query('SELECT * FROM users');
-    return result.rows;
-  }
+const PlayerModel = {
+  async getAll() {
+    const res = await pool.query('SELECT * FROM player ORDER BY id');
+    return res.rows;
+  },
 
-  static async getById(id) {
-    const result = await db.query('SELECT * FROM users WHERE id = $1', [id]);
-    return result.rows[0];
-  }
+  async getById(id) {
+    const res = await pool.query('SELECT * FROM player WHERE id = $1', [id]);
+    return res.rows[0];
+  },
 
-  static async create(data) {
-    const result = await db.query(
-      'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',
-      [data.name, data.email]
+  async create(player) {
+    const { username, email, phone, password } = player;
+    const res = await pool.query(
+      'INSERT INTO player (username, email, phone, password) VALUES ($1, $2, $3, $4) RETURNING *',
+      [username, email, phone, password]
     );
-    return result.rows[0];
-  }
+    return res.rows[0];
+  },
 
-  static async update(id, data) {
-    const result = await db.query(
-      'UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING *',
-      [data.name, data.email, id]
+  async update(id, player) {
+    const { username, email, phone, password } = player;
+    const res = await pool.query(
+      'UPDATE player SET username=$1, email=$2, phone=$3, password=$4, updated_at=NOW() WHERE id=$5 RETURNING *',
+      [username, email, phone, password, id]
     );
-    return result.rows[0];
-  }
+    return res.rows[0];
+  },
 
-  static async delete(id) {
-    const result = await db.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
-    return result.rowCount > 0;
-  }
-}
+  async delete(id) {
+    const res = await pool.query('DELETE FROM player WHERE id=$1 RETURNING *', [id]);
+    return res.rows[0];
+  },
+};
 
-module.exports = User;
+module.exports = PlayerModel;

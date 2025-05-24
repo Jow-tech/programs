@@ -1,60 +1,58 @@
-// controllers/userController.js
+const playerService = require('../services/playerService');
 
-const userService = require('../services/userService');
-
-const getAllUsers = async (req, res) => {
+const getAllPlayers = async (req, res) => {
   try {
-    const users = await userService.getAllUsers();
-    res.status(200).json(users);
+    const players = await playerService.getAllPlayers();
+    res.status(200).json(players);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-const getUserById = async (req, res) => {
+const getPlayerById = async (req, res) => {
   try {
-    const user = await userService.getUserById(req.params.id);
-    if (user) {
-      res.status(200).json(user);
+    const player = await playerService.getPlayerById(req.params.id);
+    if (player) {
+      res.status(200).json(player);
     } else {
-      res.status(404).json({ error: 'Usuário não encontrado' });
+      res.status(404).json({ error: 'Player not found' });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-const createUser = async (req, res) => {
+const createPlayer = async (req, res) => {
   try {
-    const { name, email } = req.body;
-    const newUser = await userService.createUser(name, email);
-    res.status(201).json(newUser);
+    const { username, email, phone, password } = req.body;
+    const newPlayer = await playerService.createPlayer(username, email, phone, password);
+    res.status(201).json(newPlayer);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-const updateUser = async (req, res) => {
+const updatePlayer = async (req, res) => {
   try {
-    const { name, email } = req.body;
-    const updatedUser = await userService.updateUser(req.params.id, name, email);
-    if (updatedUser) {
-      res.status(200).json(updatedUser);
+    const { username, email, phone, password } = req.body;
+    const updatedPlayer = await playerService.updatePlayer(req.params.id, username, email, phone, password);
+    if (updatedPlayer) {
+      res.status(200).json(updatedPlayer);
     } else {
-      res.status(404).json({ error: 'Usuário não encontrado' });
+      res.status(404).json({ error: 'Player not found' });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-const deleteUser = async (req, res) => {
+const deletePlayer = async (req, res) => {
   try {
-    const deletedUser = await userService.deleteUser(req.params.id);
-    if (deletedUser) {
-      res.status(200).json(deletedUser);
+    const deletedPlayer = await playerService.deletePlayer(req.params.id);
+    if (deletedPlayer) {
+      res.status(200).json(deletedPlayer);
     } else {
-      res.status(404).json({ error: 'Usuário não encontrado' });
+      res.status(404).json({ error: 'Player not found' });
     }
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -62,9 +60,9 @@ const deleteUser = async (req, res) => {
 };
 
 module.exports = {
-  getAllUsers,
-  getUserById,
-  createUser,
-  updateUser,
-  deleteUser
+  getAllPlayers,
+  getPlayerById,
+  createPlayer,
+  updatePlayer,
+  deletePlayer,
 };

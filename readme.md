@@ -1,83 +1,103 @@
-# Boilerplate MVC em Node.js com PostgreSQL
+# Employee Management System
 
-Este projeto é um boilerplate básico para uma aplicação Node.js seguindo o padrão MVC (Model-View-Controller), utilizando PostgreSQL como banco de dados.
+A RESTful API for managing employee data using Node.js, Express, and PostgreSQL.
 
-## Requisitos
+## Architecture
 
-- Node.js (versão X.X.X)
-- PostgreSQL (versão X.X.X)
+This project follows the MVC (Model-View-Controller) architecture:
 
-## Instalação
+- **Models**: Handle data structure and database operations
+- **Controllers**: Manage business logic and request handling
+- **Routes**: Define API endpoints and connect them to controllers
 
-1. **Clonar o repositório:**
+## Prerequisites
 
+- Node.js (v14 or higher)
+- PostgreSQL (v12 or higher)
+- npm (Node Package Manager)
+
+## Setup
+
+1. Clone the repository:
 ```bash
-   git clone https://github.com/seu-usuario/seu-projeto.git
-   cd seu-projeto
+git clone <repository-url>
+cd <project-directory>
 ```
 
-2. **Instalar as dependências:**
-    
+2. Install dependencies:
 ```bash
 npm install
 ```
-    
-3. **Configurar o arquivo `.env`:**
-    
-Renomeie o arquivo `.env.example` para `.env` e configure as variáveis de ambiente necessárias, como as configurações do banco de dados PostgreSQL.
-    
 
-Configuração do Banco de Dados
-------------------------------
-
-1. **Criar banco de dados:**
-    
-    Crie um banco de dados PostgreSQL com o nome especificado no seu arquivo `.env`.
-    
-2. **Executar o script SQL de inicialização:**
-    
-```bash
-npm run init-db
+3. Create a `.env` file in the root directory with the following content:
 ```
-    
-Isso criará a tabela `users` no seu banco de dados PostgreSQL com UUID como chave primária e inserirá alguns registros de exemplo.
-    
+PORT=3000
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=your_username
+DB_PASSWORD=your_password
+DB_NAME=employee_db
+```
 
-Funcionalidades
----------------
+4. Initialize the database:
+```bash
+psql -U postgres -f init.sql
+```
 
-* **Padrão MVC:** Estrutura organizada em Model, View e Controller.
-* **PostgreSQL:** Banco de dados relacional utilizado para persistência dos dados.
-* **UUID:** Utilização de UUID como chave primária na tabela `users`.
-* **Scripts com `nodemon`:** Utilização do `nodemon` para reiniciar automaticamente o servidor após alterações no código.
-* **Testes:** Inclui estrutura básica para testes automatizados.
+## Running the Application
 
-Scripts Disponíveis
--------------------
+1. Start the server:
+```bash
+npm start
+```
 
-* `npm start`: Inicia o servidor Node.js.
-* `npm run dev`: Inicia o servidor com `nodemon`, reiniciando automaticamente após alterações no código.
-* `npm run test`: Executa os testes automatizados.
-* `npm run test:coverage`: Executa os testes e gera um relatório de cobertura de código.
+2. The API will be available at `http://localhost:3000`
 
-Estrutura de Diretórios
------------------------
+## API Endpoints
 
-* **`config/`**: Configurações do banco de dados e outras configurações do projeto.
-* **`controllers/`**: Controladores da aplicação (lógica de negócio).
-* **`models/`**: Modelos da aplicação (definições de dados e interações com o banco de dados).
-* **`routes/`**: Rotas da aplicação.
-* **`tests/`**: Testes automatizados.
-* **`views/`**: Views da aplicação (se aplicável).
+### Employees
 
-Contribuição
-------------
+- `GET /api/employees` - Get all employees
+- `GET /api/employees/:id` - Get employee by ID
+- `POST /api/employees` - Create new employee
+- `PUT /api/employees/:id` - Update employee
+- `DELETE /api/employees/:id` - Delete employee
 
-Contribuições são bem-vindas! Sinta-se à vontade para abrir um issue ou enviar um pull request.
+### Request Body Format
 
-Licença
--------
+For POST and PUT requests:
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com"
+}
+```
 
-Este projeto está licenciado sob a Licença MIT.
+## Database Schema
 
-Este README.md fornece uma visão geral clara do boilerplate, incluindo instruções de instalação, configuração do banco de dados, funcionalidades principais, scripts disponíveis, estrutura de diretórios, como contribuir e informações de licença. Certifique-se de personalizar as seções com detalhes específicos do seu projeto conforme necessário.
+### Employees Table
+```sql
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+## Error Handling
+
+The API uses standard HTTP status codes:
+- 200: Success
+- 201: Created
+- 404: Not Found
+- 500: Server Error
+
+## Development
+
+This project uses:
+- Express.js for the web framework
+- PostgreSQL for the database
+- dotenv for environment variables
+- cors for Cross-Origin Resource Sharing
