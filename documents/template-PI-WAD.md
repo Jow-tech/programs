@@ -52,7 +52,7 @@ T |  dá para criar um teste para verificar se o síndico consegue acessar e aco
 
 <div align="center">
     <small><strong style="font-size: 12px;">banco de dados(Figura 1);</strong></small><br>
-      <img src="/assets/tabelasbancodedados.png">
+      <img src="/assets/banco.png">
     <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
 </div>*Posicione também o modelo físico com o Schema do BD (arquivo .sql)*
 
@@ -69,7 +69,14 @@ T |  dá para criar um teste para verificar se o síndico consegue acessar e aco
 - **View**: A camada responsável pela interface de usuário.
 - **Controller**: A camada que recebe as requisições, processa as ações e atualiza o modelo e a visualização.
   
-*Adicione as setas e explicações sobre como os dados fluem entre o Model, Controller e View.*
+| Tabela        | Campos principais                                                 | Descrição breve                         |
+| ------------- | ----------------------------------------------------------------- | --------------------------------------- |
+| `player`      | id, username, email, phone, password                              | Moradores que fazem reservas            |
+| `reservation` | id, user\_id, space\_id, date, initial\_hour, final\_hour, status | Reservas feitas pelos moradores         |
+| `spaces`      | id, name, type, capacity, location                                | Espaços disponíveis para reserva        |
+| `cleaning`    | id, reservation\_id, employee\_id, cleaning\_date, status         | Controle de limpeza após o uso          |
+| `employees`   | id, name, role, phone, email                                      | Funcionários como síndico, zelador etc. |
+
 
 ### 3.3. Wireframes (Semana 03)
 
@@ -84,9 +91,101 @@ T |  dá para criar um teste para verificar se o síndico consegue acessar e aco
 
 
 ### 3.5. Protótipo de alta fidelidade (Semana 05)
-
-*Posicione aqui algumas imagens demonstrativas de seu protótipo de alta fidelidade e o link para acesso ao protótipo completo (mantenha o link sempre público para visualização).*
-
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoclaro1/Desktop - 6.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoclaro1/Desktop - 9.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoclaro1/Desktop - 8.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoclaro1/Desktop - 12.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoescuro1/Desktop - 1.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoescuro1/Desktop - 2.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoescuro1/Desktop - 3.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoescuro1/Desktop - 11.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoclaro2/login-1.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoclaro2/iPhone 16 - 4.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoclaro2/iPhone 16 - 5.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoclaro2/cadastro de cartao-1.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoclaro2/valor da area + valor da faxina-1.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoescuro2/login.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoescuro2/iPhone 16 - 2.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoescuro2/iPhone 16 - 3.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoescuro2/cadastro de cartao.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">prótotipo</strong></small><br>
+      <img src="/assets/modoescuro2/valor da area + valor da faxina.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
+<div align="center">
+    <small><strong style="font-size: 12px;">Tipográfia</strong></small><br>
+      <img src="/assets/paleta/Frame 29.png">
+    <small style="margin-top: 4px; font-size: 10px;">Fonte: Material produzido pelos autores (2025)</small>
+</div>
 ### 3.6. WebAPI e endpoints (Semana 05)
 
 *Utilize um link para outra página de documentação contendo a descrição completa de cada endpoint. Ou descreva aqui cada endpoint criado para seu sistema.*  
