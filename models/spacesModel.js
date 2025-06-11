@@ -1,4 +1,4 @@
-// services/spacesService.js
+// models/spacesModel.js
 
 const db = require('../config/db');
 

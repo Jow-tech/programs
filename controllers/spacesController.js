@@ -1,8 +1,8 @@
-const spacesService = require('../services/spacesService');
+const spacesModel = require('../models/spacesModel');
 
 const getAllSpaces = async (req, res) => {
   try {
-    const spaces = await spacesService.getAllSpaces();
+    const spaces = await spacesModel.getAllSpaces();
     res.status(200).json(spaces);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -11,7 +11,7 @@ const getAllSpaces = async (req, res) => {
 
 const getSpaceById = async (req, res) => {
   try {
-    const space = await spacesService.getSpaceById(req.params.id);
+    const space = await spacesModel.getSpaceById(req.params.id);
     if (space) {
       res.status(200).json(space);
     } else {
@@ -25,7 +25,7 @@ const getSpaceById = async (req, res) => {
 const createSpace = async (req, res) => {
   try {
     const { name, type, capacity, location } = req.body;
-    const newSpace = await spacesService.createSpace(name, type, capacity, location);
+    const newSpace = await spacesModel.createSpace(name, type, capacity, location);
     res.status(201).json(newSpace);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -35,7 +35,7 @@ const createSpace = async (req, res) => {
 const updateSpace = async (req, res) => {
   try {
     const { name, type, capacity, location } = req.body;
-    const updatedSpace = await spacesService.updateSpace(req.params.id, name, type, capacity, location);
+    const updatedSpace = await spacesModel.updateSpace(req.params.id, name, type, capacity, location);
     if (updatedSpace) {
       res.status(200).json(updatedSpace);
     } else {
@@ -48,7 +48,7 @@ const updateSpace = async (req, res) => {
 
 const deleteSpace = async (req, res) => {
   try {
-    const deletedSpace = await spacesService.deleteSpace(req.params.id);
+    const deletedSpace = await spacesModel.deleteSpace(req.params.id);
     if (deletedSpace) {
       res.status(200).json(deletedSpace);
     } else {

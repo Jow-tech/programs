@@ -1,4 +1,4 @@
-// services/employeesService.js
+// models/employeesModel.js
 
 const db = require('../config/db');
 

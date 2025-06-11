@@ -1,4 +1,4 @@
-// services/reservationService.js
+// models/reservationModel.js
 
 const db = require('../config/db');
 

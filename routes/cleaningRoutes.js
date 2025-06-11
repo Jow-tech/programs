@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const cleaningController = require("../controllers/cleaning");
+const cleaningController = require("../controllers/cleaningController");
 
 router.get("/", cleaningController.getAllCleanings);
 router.get("/:id", cleaningController.getCleaningById);

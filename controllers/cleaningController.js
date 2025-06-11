@@ -1,8 +1,8 @@
-const cleaningService = require('../services/cleaningService');
+const cleaningModel = require('../models/cleaningModel');
 
 const getAllCleanings = async (req, res) => {
   try {
-    const cleanings = await cleaningService.getAllCleanings();
+    const cleanings = await cleaningModel.getAllCleanings();
     res.status(200).json(cleanings);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -11,7 +11,7 @@ const getAllCleanings = async (req, res) => {
 
 const getCleaningById = async (req, res) => {
   try {
-    const cleaning = await cleaningService.getCleaningById(req.params.id);
+    const cleaning = await cleaningModel.getCleaningById(req.params.id);
     if (cleaning) {
       res.status(200).json(cleaning);
     } else {
@@ -25,7 +25,7 @@ const getCleaningById = async (req, res) => {
 const createCleaning = async (req, res) => {
   try {
     const { reservation_id, space_id, employee_id, cleaning_date, status } = req.body;
-    const newCleaning = await cleaningService.createCleaning(reservation_id, space_id, employee_id, cleaning_date, status);
+    const newCleaning = await cleaningModel.createCleaning(reservation_id, space_id, employee_id, cleaning_date, status);
     res.status(201).json(newCleaning);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -35,7 +35,7 @@ const createCleaning = async (req, res) => {
 const updateCleaning = async (req, res) => {
   try {
     const { reservation_id, space_id, employee_id, cleaning_date, status } = req.body;
-    const updatedCleaning = await cleaningService.updateCleaning(req.params.id, reservation_id, space_id, employee_id, cleaning_date, status);
+    const updatedCleaning = await cleaningModel.updateCleaning(req.params.id, reservation_id, space_id, employee_id, cleaning_date, status);
     if (updatedCleaning) {
       res.status(200).json(updatedCleaning);
     } else {
@@ -48,7 +48,7 @@ const updateCleaning = async (req, res) => {
 
 const deleteCleaning = async (req, res) => {
   try {
-    const deletedCleaning = await cleaningService.deleteCleaning(req.params.id);
+    const deletedCleaning = await cleaningModel.deleteCleaning(req.params.id);
     if (deletedCleaning) {
       res.status(200).json(deletedCleaning);
     } else {
