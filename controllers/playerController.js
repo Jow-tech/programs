@@ -1,8 +1,8 @@
-const playerService = require("../services/userService");
+const playerModel = require("../models/playerModel");
 
 const getAllPlayers = async (req, res) => {
   try {
-    const players = await playerService.getAllPlayers();
+    const players = await playerModel.getAllPlayers();
     res.status(200).json(players);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -11,7 +11,7 @@ const getAllPlayers = async (req, res) => {
 
 const getPlayerById = async (req, res) => {
   try {
-    const player = await playerService.getPlayerById(req.params.id);
+    const player = await playerModel.getPlayerById(req.params.id);
     if (player) {
       res.status(200).json(player);
     } else {
@@ -25,7 +25,7 @@ const getPlayerById = async (req, res) => {
 const createPlayer = async (req, res) => {
   try {
     const { username, email, phone, password } = req.body;
-    const newPlayer = await playerService.createPlayer(
+    const newPlayer = await playerModel.createPlayer(
       username,
       email,
       phone,
@@ -40,7 +40,7 @@ const createPlayer = async (req, res) => {
 const updatePlayer = async (req, res) => {
   try {
     const { username, email, phone, password } = req.body;
-    const updatedPlayer = await playerService.updatePlayer(
+    const updatedPlayer = await playerModel.updatePlayer(
       req.params.id,
       username,
       email,
@@ -59,7 +59,7 @@ const updatePlayer = async (req, res) => {
 
 const deletePlayer = async (req, res) => {
   try {
-    const deletedPlayer = await playerService.deletePlayer(req.params.id);
+    const deletedPlayer = await playerModel.deletePlayer(req.params.id);
     if (deletedPlayer) {
       res.status(200).json(deletedPlayer);
     } else {

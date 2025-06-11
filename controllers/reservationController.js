@@ -1,8 +1,8 @@
-const reservationService = require('../services/reservationService');
+const reservationModel = require('../models/reservationModel');
 
 const getAllReservations = async (req, res) => {
   try {
-    const reservations = await reservationService.getAllReservations();
+    const reservations = await reservationModel.getAllReservations();
     res.status(200).json(reservations);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -11,7 +11,7 @@ const getAllReservations = async (req, res) => {
 
 const getReservationById = async (req, res) => {
   try {
-    const reservation = await reservationService.getReservationById(req.params.id);
+    const reservation = await reservationModel.getReservationById(req.params.id);
     if (reservation) {
       res.status(200).json(reservation);
     } else {
@@ -25,7 +25,7 @@ const getReservationById = async (req, res) => {
 const createReservation = async (req, res) => {
   try {
     const { user_id, space_id, reservation_date, initial_hour, final_hour, status } = req.body;
-    const newReservation = await reservationService.createReservation(user_id, space_id, reservation_date, initial_hour, final_hour, status);
+    const newReservation = await reservationModel.createReservation(user_id, space_id, reservation_date, initial_hour, final_hour, status);
     res.status(201).json(newReservation);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -35,7 +35,7 @@ const createReservation = async (req, res) => {
 const updateReservation = async (req, res) => {
   try {
     const { user_id, space_id, reservation_date, initial_hour, final_hour, status } = req.body;
-    const updatedReservation = await reservationService.updateReservation(req.params.id, user_id, space_id, reservation_date, initial_hour, final_hour, status);
+    const updatedReservation = await reservationModel.updateReservation(req.params.id, user_id, space_id, reservation_date, initial_hour, final_hour, status);
     if (updatedReservation) {
       res.status(200).json(updatedReservation);
     } else {
@@ -48,7 +48,7 @@ const updateReservation = async (req, res) => {
 
 const deleteReservation = async (req, res) => {
   try {
-    const deletedReservation = await reservationService.deleteReservation(req.params.id);
+    const deletedReservation = await reservationModel.deleteReservation(req.params.id);
     if (deletedReservation) {
       res.status(200).json(deletedReservation);
     } else {

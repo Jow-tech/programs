@@ -1,4 +1,4 @@
-// services/cleaningService.js
+// models/cleaningModel.js
 
 const db = require('../config/db');
 

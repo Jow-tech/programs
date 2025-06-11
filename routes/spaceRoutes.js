@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const spacesController = require("../controllers/spaces");
+const spacesController = require("../controllers/spacesController");
 
 router.get("/", spacesController.getAllSpaces);
 router.get("/:id", spacesController.getSpaceById);
