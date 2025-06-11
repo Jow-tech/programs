@@ -1,0 +1,259 @@
+<div class="card">
+  <div class="card-header">
+    <h1 class="card-title">Gerenciar Espaços</h1>
+    <p>Cadastro e gerenciamento de espaços disponíveis para reserva</p>
+  </div>
+
+  <!-- Barra de ações -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div class="search-container">
+      <input type="text" id="search-spaces" class="search-input" placeholder="Pesquisar espaços...">
+    </div>
+    <button class="btn btn-primary" onclick="openSpaceModal()">+ Novo Espaço</button>
+  </div>
+
+  <!-- Tabela de espaços -->
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Tipo</th>
+          <th>Capacidade</th>
+          <th>Localização</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="spaces-table">
+        <tr>
+          <td colspan="6" class="loading">Carregando espaços...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal para criar/editar espaço -->
+<div id="space-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title" id="space-modal-title">Novo Espaço</h2>
+      <button class="modal-close" onclick="closeSpaceModal()">&times;</button>
+    </div>
+    
+    <form id="space-form">
+      <input type="hidden" id="space-id">
+      
+      <div class="form-group">
+        <label class="form-label" for="space-name">Nome do Espaço *</label>
+        <input type="text" id="space-name" class="form-control" required>
+        <div class="form-error" id="space-name-error"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="space-type">Tipo *</label>
+          <select id="space-type" class="form-control" required>
+            <option value="">Selecione o tipo</option>
+            <option value="Reunião">Reunião</option>
+            <option value="Evento">Evento</option>
+            <option value="Festa">Festa</option>
+            <option value="Trabalho">Trabalho</option>
+            <option value="Esporte">Esporte</option>
+            <option value="Lazer">Lazer</option>
+          </select>
+          <div class="form-error" id="space-type-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="space-capacity">Capacidade</label>
+          <input type="number" id="space-capacity" class="form-control" min="1">
+          <div class="form-error" id="space-capacity-error"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="space-location">Localização *</label>
+        <input type="text" id="space-location" class="form-control" required>
+        <div class="form-error" id="space-location-error"></div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeSpaceModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+let spaces = [];
+let editingSpaceId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadSpaces();
+  setupSearch();
+  setupForm();
+});
+
+async function loadSpaces() {
+  try {
+    showLoading(document.getElementById('spaces-table'));
+    spaces = await api.getSpaces();
+    renderSpaces(spaces);
+  } catch (error) {
+    console.error('Erro ao carregar espaços:', error);
+    showMessage('Erro ao carregar espaços', 'error');
+    document.getElementById('spaces-table').innerHTML = 
+      '<tr><td colspan="6">Erro ao carregar espaços</td></tr>';
+  }
+}
+
+function renderSpaces(spacesToRender) {
+  const tbody = document.getElementById('spaces-table');
+  
+  if (spacesToRender.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6">Nenhum espaço encontrado</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = spacesToRender.map(space => `
+    <tr>
+      <td>${space.id}</td>
+      <td>${space.name}</td>
+      <td>${space.type}</td>
+      <td>${space.capacity || 'N/A'}</td>
+      <td>${space.location}</td>
+      <td class="table-actions">
+        <button class="btn btn-sm btn-primary" onclick="editSpace(${space.id})">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteSpace(${space.id})">Excluir</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function setupSearch() {
+  const searchInput = document.getElementById('search-spaces');
+  const debouncedSearch = debounce(function(searchTerm) {
+    const filteredSpaces = spaces.filter(space => 
+      space.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      space.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      space.location.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    renderSpaces(filteredSpaces);
+  }, 300);
+
+  searchInput.addEventListener('input', function() {
+    debouncedSearch(this.value);
+  });
+}
+
+function setupForm() {
+  document.getElementById('space-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    await saveSpace();
+  });
+}
+
+function openSpaceModal(spaceId = null) {
+  editingSpaceId = spaceId;
+  const modal = document.getElementById('space-modal');
+  const title = document.getElementById('space-modal-title');
+  
+  if (spaceId) {
+    title.textContent = 'Editar Espaço';
+    const space = spaces.find(s => s.id === spaceId);
+    if (space) {
+      document.getElementById('space-id').value = space.id;
+      document.getElementById('space-name').value = space.name;
+      document.getElementById('space-type').value = space.type;
+      document.getElementById('space-capacity').value = space.capacity || '';
+      document.getElementById('space-location').value = space.location;
+    }
+  } else {
+    title.textContent = 'Novo Espaço';
+    document.getElementById('space-form').reset();
+    document.getElementById('space-id').value = '';
+  }
+  
+  clearFormErrors();
+  modal.classList.add('show');
+}
+
+function closeSpaceModal() {
+  document.getElementById('space-modal').classList.remove('show');
+  editingSpaceId = null;
+}
+
+function clearFormErrors() {
+  const errorElements = document.querySelectorAll('.form-error');
+  errorElements.forEach(el => el.textContent = '');
+  
+  const formControls = document.querySelectorAll('.form-control');
+  formControls.forEach(el => {
+    el.classList.remove('is-invalid', 'is-valid');
+  });
+}
+
+async function saveSpace() {
+  const formData = {
+    name: document.getElementById('space-name').value.trim(),
+    type: document.getElementById('space-type').value,
+    capacity: parseInt(document.getElementById('space-capacity').value) || null,
+    location: document.getElementById('space-location').value.trim()
+  };
+
+  // Validação
+  const errors = validateForm(formData, ['name', 'type', 'location']);
+  
+  if (errors.length > 0) {
+    errors.forEach(error => {
+      showMessage(error, 'error');
+    });
+    return;
+  }
+
+  try {
+    if (editingSpaceId) {
+      await api.updateSpace(editingSpaceId, formData);
+      showMessage('Espaço atualizado com sucesso!', 'success');
+    } else {
+      await api.createSpace(formData);
+      showMessage('Espaço criado com sucesso!', 'success');
+    }
+    
+    closeSpaceModal();
+    await loadSpaces();
+  } catch (error) {
+    console.error('Erro ao salvar espaço:', error);
+    showMessage('Erro ao salvar espaço: ' + error.message, 'error');
+  }
+}
+
+function editSpace(spaceId) {
+  openSpaceModal(spaceId);
+}
+
+async function deleteSpace(spaceId) {
+  if (!confirmAction('Tem certeza que deseja excluir este espaço?')) {
+    return;
+  }
+
+  try {
+    await api.deleteSpace(spaceId);
+    showMessage('Espaço excluído com sucesso!', 'success');
+    await loadSpaces();
+  } catch (error) {
+    console.error('Erro ao excluir espaço:', error);
+    showMessage('Erro ao excluir espaço: ' + error.message, 'error');
+  }
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('space-modal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeSpaceModal();
+  }
+});
+</script>

@@ -1,29 +1,34 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= pageTitle %></title>  
-  <style>
-    <%- include('../css/style.css'); %>
-  </style>
-</head>
-<body>
-  <!-- Inclui o cabeçalho como um partial -->
-  <%- include('../components/header') %>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= pageTitle %></title>
+    <style>
+      <%- include('../css/style.css'); %>
+    </style>
+  </head>
+  <body>
+    <!-- Container para mensagens de feedback -->
+    <div id="message-container"></div>
 
-  <main>
-    <!-- Renderiza o conteúdo da página específica -->
-    <%- include(content) %>
-  </main>
+    <!-- Inclui o cabeçalho como um partial -->
+    <%- include('../components/header') %>
 
-  <footer>
-    <!-- Rodapé comum aqui -->
-    <p>Rodapé da Aplicação</p>
-  </footer>
+    <main>
+      <!-- Renderiza o conteúdo da página específica -->
+      <%- include(content) %>
+    </main>
 
-  <!-- Adicione scripts JS se necessário -->
-  <script src="/js/script.js"></script>
-  
-</body>
+    <footer>
+      <p>
+        &copy; 2025 Sistema de Reserva de Espaços Comuns - Todos os direitos
+        reservados
+      </p>
+    </footer>
+
+    <!-- Scripts JavaScript -->
+    <script src="/js/utils.js"></script>
+    <script src="/js/api.js"></script>
+  </body>
 </html>

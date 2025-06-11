@@ -1,0 +1,305 @@
+<div class="card">
+  <div class="card-header">
+    <h1 class="card-title">Gerenciar Funcionários</h1>
+    <p>Cadastro e gerenciamento de funcionários (síndicos, zeladores, equipe de limpeza)</p>
+  </div>
+
+  <!-- Barra de ações -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div class="search-container">
+      <input type="text" id="search-employees" class="search-input" placeholder="Pesquisar funcionários...">
+    </div>
+    <button class="btn btn-primary" onclick="openEmployeeModal()">+ Novo Funcionário</button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Função:</label>
+        <select id="filter-role" class="form-control" style="width: auto;">
+          <option value="">Todas</option>
+          <option value="Limpeza">Limpeza</option>
+          <option value="Manutenção">Manutenção</option>
+          <option value="Síndico">Síndico</option>
+          <option value="Zelador">Zelador</option>
+          <option value="Supervisor">Supervisor</option>
+        </select>
+      </div>
+      <button class="btn btn-secondary" onclick="clearFilters()">Limpar Filtros</button>
+    </div>
+  </div>
+
+  <!-- Tabela de funcionários -->
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome</th>
+          <th>Função</th>
+          <th>Telefone</th>
+          <th>Email</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="employees-table">
+        <tr>
+          <td colspan="6" class="loading">Carregando funcionários...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal para criar/editar funcionário -->
+<div id="employee-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title" id="employee-modal-title">Novo Funcionário</h2>
+      <button class="modal-close" onclick="closeEmployeeModal()">&times;</button>
+    </div>
+    
+    <form id="employee-form">
+      <input type="hidden" id="employee-id">
+      
+      <div class="form-group">
+        <label class="form-label" for="employee-name">Nome Completo *</label>
+        <input type="text" id="employee-name" class="form-control" required>
+        <div class="form-error" id="employee-name-error"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="employee-role">Função *</label>
+          <select id="employee-role" class="form-control" required>
+            <option value="">Selecione a função</option>
+            <option value="Limpeza">Limpeza</option>
+            <option value="Manutenção">Manutenção</option>
+            <option value="Síndico">Síndico</option>
+            <option value="Zelador">Zelador</option>
+            <option value="Supervisor">Supervisor</option>
+            <option value="Porteiro">Porteiro</option>
+            <option value="Jardineiro">Jardineiro</option>
+          </select>
+          <div class="form-error" id="employee-role-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="employee-phone">Telefone</label>
+          <input type="tel" id="employee-phone" class="form-control">
+          <div class="form-error" id="employee-phone-error"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="employee-email">Email *</label>
+        <input type="email" id="employee-email" class="form-control" required>
+        <div class="form-error" id="employee-email-error"></div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeEmployeeModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+let employees = [];
+let editingEmployeeId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadEmployees();
+  setupSearch();
+  setupFilters();
+  setupForm();
+});
+
+async function loadEmployees() {
+  try {
+    showLoading(document.getElementById('employees-table'));
+    employees = await api.getEmployees();
+    renderEmployees(employees);
+  } catch (error) {
+    console.error('Erro ao carregar funcionários:', error);
+    showMessage('Erro ao carregar funcionários', 'error');
+    document.getElementById('employees-table').innerHTML = 
+      '<tr><td colspan="6">Erro ao carregar funcionários</td></tr>';
+  }
+}
+
+function renderEmployees(employeesToRender) {
+  const tbody = document.getElementById('employees-table');
+  
+  if (employeesToRender.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6">Nenhum funcionário encontrado</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = employeesToRender.map(employee => `
+    <tr>
+      <td>${employee.id}</td>
+      <td>${employee.name}</td>
+      <td><span class="status status-confirmed">${employee.role}</span></td>
+      <td>${employee.phone || 'N/A'}</td>
+      <td>${employee.email}</td>
+      <td class="table-actions">
+        <button class="btn btn-sm btn-primary" onclick="editEmployee(${employee.id})">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${employee.id})">Excluir</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function setupSearch() {
+  const searchInput = document.getElementById('search-employees');
+  const debouncedSearch = debounce(function(searchTerm) {
+    applyFilters();
+  }, 300);
+
+  searchInput.addEventListener('input', function() {
+    debouncedSearch(this.value);
+  });
+}
+
+function setupFilters() {
+  document.getElementById('filter-role').addEventListener('change', applyFilters);
+}
+
+function applyFilters() {
+  const searchTerm = document.getElementById('search-employees').value.toLowerCase();
+  const roleFilter = document.getElementById('filter-role').value;
+
+  let filteredEmployees = employees.filter(employee => {
+    // Filtro de pesquisa
+    const matchesSearch = !searchTerm || 
+      employee.name.toLowerCase().includes(searchTerm) ||
+      employee.email.toLowerCase().includes(searchTerm) ||
+      employee.role.toLowerCase().includes(searchTerm) ||
+      (employee.phone && employee.phone.includes(searchTerm));
+    
+    // Filtro de função
+    const matchesRole = !roleFilter || employee.role === roleFilter;
+    
+    return matchesSearch && matchesRole;
+  });
+
+  renderEmployees(filteredEmployees);
+}
+
+function clearFilters() {
+  document.getElementById('search-employees').value = '';
+  document.getElementById('filter-role').value = '';
+  renderEmployees(employees);
+}
+
+function setupForm() {
+  document.getElementById('employee-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    await saveEmployee();
+  });
+}
+
+function openEmployeeModal(employeeId = null) {
+  editingEmployeeId = employeeId;
+  const modal = document.getElementById('employee-modal');
+  const title = document.getElementById('employee-modal-title');
+  
+  if (employeeId) {
+    title.textContent = 'Editar Funcionário';
+    const employee = employees.find(e => e.id === employeeId);
+    if (employee) {
+      document.getElementById('employee-id').value = employee.id;
+      document.getElementById('employee-name').value = employee.name;
+      document.getElementById('employee-role').value = employee.role;
+      document.getElementById('employee-phone').value = employee.phone || '';
+      document.getElementById('employee-email').value = employee.email;
+    }
+  } else {
+    title.textContent = 'Novo Funcionário';
+    document.getElementById('employee-form').reset();
+    document.getElementById('employee-id').value = '';
+  }
+  
+  clearFormErrors();
+  modal.classList.add('show');
+}
+
+function closeEmployeeModal() {
+  document.getElementById('employee-modal').classList.remove('show');
+  editingEmployeeId = null;
+}
+
+function clearFormErrors() {
+  const errorElements = document.querySelectorAll('.form-error');
+  errorElements.forEach(el => el.textContent = '');
+  
+  const formControls = document.querySelectorAll('.form-control');
+  formControls.forEach(el => {
+    el.classList.remove('is-invalid', 'is-valid');
+  });
+}
+
+async function saveEmployee() {
+  const formData = {
+    name: document.getElementById('employee-name').value.trim(),
+    role: document.getElementById('employee-role').value,
+    phone: document.getElementById('employee-phone').value.trim(),
+    email: document.getElementById('employee-email').value.trim()
+  };
+
+  // Validação
+  const errors = validateForm(formData, ['name', 'role', 'email']);
+  
+  if (errors.length > 0) {
+    errors.forEach(error => {
+      showMessage(error, 'error');
+    });
+    return;
+  }
+
+  try {
+    if (editingEmployeeId) {
+      await api.updateEmployee(editingEmployeeId, formData);
+      showMessage('Funcionário atualizado com sucesso!', 'success');
+    } else {
+      await api.createEmployee(formData);
+      showMessage('Funcionário criado com sucesso!', 'success');
+    }
+    
+    closeEmployeeModal();
+    await loadEmployees();
+  } catch (error) {
+    console.error('Erro ao salvar funcionário:', error);
+    showMessage('Erro ao salvar funcionário: ' + error.message, 'error');
+  }
+}
+
+function editEmployee(employeeId) {
+  openEmployeeModal(employeeId);
+}
+
+async function deleteEmployee(employeeId) {
+  if (!confirmAction('Tem certeza que deseja excluir este funcionário?')) {
+    return;
+  }
+
+  try {
+    await api.deleteEmployee(employeeId);
+    showMessage('Funcionário excluído com sucesso!', 'success');
+    await loadEmployees();
+  } catch (error) {
+    console.error('Erro ao excluir funcionário:', error);
+    showMessage('Erro ao excluir funcionário: ' + error.message, 'error');
+  }
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('employee-modal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeEmployeeModal();
+  }
+});
+</script>

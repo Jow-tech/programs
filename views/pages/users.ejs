@@ -1,0 +1,247 @@
+<div class="card">
+  <div class="card-header">
+    <h1 class="card-title">Gerenciar Usuários/Moradores</h1>
+    <p>Cadastro e gerenciamento de usuários do sistema</p>
+  </div>
+
+  <!-- Barra de ações -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div class="search-container">
+      <input type="text" id="search-users" class="search-input" placeholder="Pesquisar usuários...">
+    </div>
+    <button class="btn btn-primary" onclick="openUserModal()">+ Novo Usuário</button>
+  </div>
+
+  <!-- Tabela de usuários -->
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nome de Usuário</th>
+          <th>Email</th>
+          <th>Telefone</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="users-table">
+        <tr>
+          <td colspan="5" class="loading">Carregando usuários...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal para criar/editar usuário -->
+<div id="user-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title" id="user-modal-title">Novo Usuário</h2>
+      <button class="modal-close" onclick="closeUserModal()">&times;</button>
+    </div>
+    
+    <form id="user-form">
+      <input type="hidden" id="user-id">
+      
+      <div class="form-group">
+        <label class="form-label" for="username">Nome de Usuário *</label>
+        <input type="text" id="username" class="form-control" required>
+        <div class="form-error" id="username-error"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email *</label>
+        <input type="email" id="email" class="form-control" required>
+        <div class="form-error" id="email-error"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="phone">Telefone</label>
+        <input type="tel" id="phone" class="form-control">
+        <div class="form-error" id="phone-error"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Senha *</label>
+        <input type="password" id="password" class="form-control" required>
+        <div class="form-error" id="password-error"></div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+let users = [];
+let editingUserId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadUsers();
+  setupSearch();
+  setupForm();
+});
+
+async function loadUsers() {
+  try {
+    showLoading(document.getElementById('users-table'));
+    users = await api.getUsers();
+    renderUsers(users);
+  } catch (error) {
+    console.error('Erro ao carregar usuários:', error);
+    showMessage('Erro ao carregar usuários', 'error');
+    document.getElementById('users-table').innerHTML = 
+      '<tr><td colspan="5">Erro ao carregar usuários</td></tr>';
+  }
+}
+
+function renderUsers(usersToRender) {
+  const tbody = document.getElementById('users-table');
+  
+  if (usersToRender.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5">Nenhum usuário encontrado</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = usersToRender.map(user => `
+    <tr>
+      <td>${user.id}</td>
+      <td>${user.username}</td>
+      <td>${user.email}</td>
+      <td>${user.phone || 'N/A'}</td>
+      <td class="table-actions">
+        <button class="btn btn-sm btn-primary" onclick="editUser(${user.id})">Editar</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteUser(${user.id})">Excluir</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function setupSearch() {
+  const searchInput = document.getElementById('search-users');
+  const debouncedSearch = debounce(function(searchTerm) {
+    const filteredUsers = users.filter(user => 
+      user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.phone && user.phone.includes(searchTerm))
+    );
+    renderUsers(filteredUsers);
+  }, 300);
+
+  searchInput.addEventListener('input', function() {
+    debouncedSearch(this.value);
+  });
+}
+
+function setupForm() {
+  document.getElementById('user-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    await saveUser();
+  });
+}
+
+function openUserModal(userId = null) {
+  editingUserId = userId;
+  const modal = document.getElementById('user-modal');
+  const title = document.getElementById('user-modal-title');
+  
+  if (userId) {
+    title.textContent = 'Editar Usuário';
+    const user = users.find(u => u.id === userId);
+    if (user) {
+      document.getElementById('user-id').value = user.id;
+      document.getElementById('username').value = user.username;
+      document.getElementById('email').value = user.email;
+      document.getElementById('phone').value = user.phone || '';
+      document.getElementById('password').value = user.password;
+    }
+  } else {
+    title.textContent = 'Novo Usuário';
+    document.getElementById('user-form').reset();
+    document.getElementById('user-id').value = '';
+  }
+  
+  clearFormErrors();
+  modal.classList.add('show');
+}
+
+function closeUserModal() {
+  document.getElementById('user-modal').classList.remove('show');
+  editingUserId = null;
+}
+
+function clearFormErrors() {
+  const errorElements = document.querySelectorAll('.form-error');
+  errorElements.forEach(el => el.textContent = '');
+  
+  const formControls = document.querySelectorAll('.form-control');
+  formControls.forEach(el => {
+    el.classList.remove('is-invalid', 'is-valid');
+  });
+}
+
+async function saveUser() {
+  const formData = {
+    username: document.getElementById('username').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    phone: document.getElementById('phone').value.trim(),
+    password: document.getElementById('password').value
+  };
+
+  // Validação
+  const errors = validateForm(formData, ['username', 'email', 'password']);
+  
+  if (errors.length > 0) {
+    errors.forEach(error => {
+      showMessage(error, 'error');
+    });
+    return;
+  }
+
+  try {
+    if (editingUserId) {
+      await api.updateUser(editingUserId, formData);
+      showMessage('Usuário atualizado com sucesso!', 'success');
+    } else {
+      await api.createUser(formData);
+      showMessage('Usuário criado com sucesso!', 'success');
+    }
+    
+    closeUserModal();
+    await loadUsers();
+  } catch (error) {
+    console.error('Erro ao salvar usuário:', error);
+    showMessage('Erro ao salvar usuário: ' + error.message, 'error');
+  }
+}
+
+function editUser(userId) {
+  openUserModal(userId);
+}
+
+async function deleteUser(userId) {
+  if (!confirmAction('Tem certeza que deseja excluir este usuário?')) {
+    return;
+  }
+
+  try {
+    await api.deleteUser(userId);
+    showMessage('Usuário excluído com sucesso!', 'success');
+    await loadUsers();
+  } catch (error) {
+    console.error('Erro ao excluir usuário:', error);
+    showMessage('Erro ao excluir usuário: ' + error.message, 'error');
+  }
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('user-modal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeUserModal();
+  }
+});
+</script>

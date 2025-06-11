@@ -1,0 +1,165 @@
+<div class="card">
+  <div class="card-header">
+    <h1 class="card-title">Dashboard - Sistema de Reserva de Espaços Comuns</h1>
+    <p>Bem-vindo ao painel de controle do sistema de reservas</p>
+  </div>
+
+  <!-- Grid de estatísticas -->
+  <div class="dashboard-grid">
+    <div class="dashboard-card">
+      <div class="dashboard-card-icon">👥</div>
+      <div class="dashboard-card-title">Usuários</div>
+      <div class="dashboard-card-value" id="users-count">-</div>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="dashboard-card-icon">🏢</div>
+      <div class="dashboard-card-title">Espaços</div>
+      <div class="dashboard-card-value" id="spaces-count">-</div>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="dashboard-card-icon">📅</div>
+      <div class="dashboard-card-title">Reservas Ativas</div>
+      <div class="dashboard-card-value" id="reservations-count">-</div>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="dashboard-card-icon">🧹</div>
+      <div class="dashboard-card-title">Limpezas Pendentes</div>
+      <div class="dashboard-card-value" id="cleaning-count">-</div>
+    </div>
+
+    <div class="dashboard-card">
+      <div class="dashboard-card-icon">👷</div>
+      <div class="dashboard-card-title">Funcionários</div>
+      <div class="dashboard-card-value" id="employees-count">-</div>
+    </div>
+  </div>
+
+  <!-- Ações rápidas -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Ações Rápidas</h2>
+    </div>
+    <div class="dashboard-grid">
+      <a href="/users" class="btn btn-primary">Gerenciar Usuários</a>
+      <a href="/spaces" class="btn btn-secondary">Gerenciar Espaços</a>
+      <a href="/reservations" class="btn btn-success">Nova Reserva</a>
+      <a href="/cleaning" class="btn btn-warning">Controle de Limpeza</a>
+      <a href="/employees" class="btn btn-primary">Gerenciar Funcionários</a>
+    </div>
+  </div>
+
+  <!-- Reservas recentes -->
+  <div class="card">
+    <div class="card-header">
+      <h2 class="card-title">Reservas Recentes</h2>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Usuário</th>
+            <th>Espaço</th>
+            <th>Data</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="recent-reservations">
+          <tr>
+            <td colspan="5" class="loading">Carregando reservas recentes...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+  try {
+    // Carregar estatísticas
+    await loadDashboardStats();
+    
+    // Carregar reservas recentes
+    await loadRecentReservations();
+    
+  } catch (error) {
+    console.error('Erro ao carregar dashboard:', error);
+    showMessage('Erro ao carregar dados do dashboard', 'error');
+  }
+});
+
+async function loadDashboardStats() {
+  try {
+    // Carregar contadores
+    const [users, spaces, reservations, cleanings, employees] = await Promise.all([
+      api.getUsers(),
+      api.getSpaces(),
+      api.getReservations(),
+      api.getCleanings(),
+      api.getEmployees()
+    ]);
+
+    // Atualizar contadores
+    document.getElementById('users-count').textContent = users.length;
+    document.getElementById('spaces-count').textContent = spaces.length;
+    
+    // Contar apenas reservas ativas (não canceladas)
+    const activeReservations = reservations.filter(r => r.status !== 'cancelled');
+    document.getElementById('reservations-count').textContent = activeReservations.length;
+    
+    // Contar limpezas pendentes
+    const pendingCleanings = cleanings.filter(c => c.status === 'pending');
+    document.getElementById('cleaning-count').textContent = pendingCleanings.length;
+    
+    document.getElementById('employees-count').textContent = employees.length;
+
+  } catch (error) {
+    console.error('Erro ao carregar estatísticas:', error);
+    // Manter os valores como "-" em caso de erro
+  }
+}
+
+async function loadRecentReservations() {
+  try {
+    const reservations = await api.getReservations();
+    const users = await api.getUsers();
+    const spaces = await api.getSpaces();
+    
+    // Pegar as 5 reservas mais recentes
+    const recentReservations = reservations
+      .sort((a, b) => new Date(b.reservation_date) - new Date(a.reservation_date))
+      .slice(0, 5);
+
+    const tbody = document.getElementById('recent-reservations');
+    
+    if (recentReservations.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5">Nenhuma reserva encontrada</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = recentReservations.map(reservation => {
+      const user = users.find(u => u.id === reservation.user_id);
+      const space = spaces.find(s => s.id === reservation.space_id);
+      
+      return `
+        <tr>
+          <td>${reservation.id}</td>
+          <td>${user ? user.username : 'N/A'}</td>
+          <td>${space ? space.name : 'N/A'}</td>
+          <td>${formatDate(reservation.reservation_date)}</td>
+          <td><span class="status ${getStatusClass(reservation.status)}">${translateStatus(reservation.status)}</span></td>
+        </tr>
+      `;
+    }).join('');
+
+  } catch (error) {
+    console.error('Erro ao carregar reservas recentes:', error);
+    document.getElementById('recent-reservations').innerHTML = 
+      '<tr><td colspan="5">Erro ao carregar reservas</td></tr>';
+  }
+}
+</script>

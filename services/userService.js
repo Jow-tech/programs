@@ -1,67 +1,70 @@
 // services/userService.js
 
-const db = require('../config/db');
+const db = require("../config/db");
 
-// Função para obter todos os usuários
-const getAllUsers = async () => {
+// Função para obter todos os usuários (players)
+const getAllPlayers = async () => {
   try {
-    const result = await db.query('SELECT * FROM player ');
+    const result = await db.query("SELECT * FROM player ORDER BY id");
     return result.rows;
   } catch (error) {
-    throw new Error('Erro ao obter usuários: ' + error.message);
+    throw new Error("Erro ao obter usuários: " + error.message);
   }
 };
 
 // Função para obter um usuário por ID
-const getUserById = async (id) => {
+const getPlayerById = async (id) => {
   try {
-    const result = await db.query('SELECT * FROM users WHERE id = $1', [id]);
+    const result = await db.query("SELECT * FROM player WHERE id = $1", [id]);
     return result.rows[0];
   } catch (error) {
-    throw new Error('Erro ao obter usuário: ' + error.message);
+    throw new Error("Erro ao obter usuário: " + error.message);
   }
 };
 
 // Função para criar um novo usuário
-const createUser = async (name, email) => {
+const createPlayer = async (username, email, phone, password) => {
   try {
     const result = await db.query(
-      'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *',
-      [name, email]
+      "INSERT INTO player (username, email, phone, password) VALUES ($1, $2, $3, $4) RETURNING *",
+      [username, email, phone, password]
     );
     return result.rows[0];
   } catch (error) {
-    throw new Error('Erro ao criar usuário: ' + error.message);
+    throw new Error("Erro ao criar usuário: " + error.message);
   }
 };
 
 // Função para atualizar um usuário por ID
-const updateUser = async (id, name, email) => {
+const updatePlayer = async (id, username, email, phone, password) => {
   try {
     const result = await db.query(
-      'UPDATE users SET name = $1, email = $2 WHERE id = $3 RETURNING *',
-      [name, email, id]
+      "UPDATE player SET username = $1, email = $2, phone = $3, password = $4 WHERE id = $5 RETURNING *",
+      [username, email, phone, password, id]
     );
     return result.rows[0];
   } catch (error) {
-    throw new Error('Erro ao atualizar usuário: ' + error.message);
+    throw new Error("Erro ao atualizar usuário: " + error.message);
   }
 };
 
 // Função para deletar um usuário por ID
-const deleteUser = async (id) => {
+const deletePlayer = async (id) => {
   try {
-    const result = await db.query('DELETE FROM users WHERE id = $1 RETURNING *', [id]);
+    const result = await db.query(
+      "DELETE FROM player WHERE id = $1 RETURNING *",
+      [id]
+    );
     return result.rows[0];
   } catch (error) {
-    throw new Error('Erro ao deletar usuário: ' + error.message);
+    throw new Error("Erro ao deletar usuário: " + error.message);
   }
 };
 
 module.exports = {
-  getAllUsers,
-  getUserById,
-  createUser,
-  updateUser,
-  deleteUser
+  getAllPlayers,
+  getPlayerById,
+  createPlayer,
+  updatePlayer,
+  deletePlayer,
 };
