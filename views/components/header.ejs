@@ -1,9 +1,27 @@
 <header>
   <nav>
     <ul>
-      <li><a href="/">Página Inicial</a></li>
-      <li><a href="/about">Sobre Nós</a></li>
-      <!-- Adicione outras opções de navegação conforme necessário -->
+      <li><a href="/" id="nav-dashboard">🏠 Dashboard</a></li>
+      <li><a href="/users" id="nav-users">👥 Usuários</a></li>
+      <li><a href="/spaces" id="nav-spaces">🏢 Espaços</a></li>
+      <li><a href="/reservations" id="nav-reservations">📅 Reservas</a></li>
+      <li><a href="/cleaning" id="nav-cleaning">🧹 Limpeza</a></li>
+      <li><a href="/employees" id="nav-employees">👷 Funcionários</a></li>
     </ul>
   </nav>
 </header>
+
+<script>
+  // Marcar link ativo na navegação
+  document.addEventListener("DOMContentLoaded", function () {
+    const currentPath = window.location.pathname;
+    const navLinks = document.querySelectorAll("header nav a");
+
+    navLinks.forEach((link) => {
+      link.classList.remove("active");
+      if (link.getAttribute("href") === currentPath) {
+        link.classList.add("active");
+      }
+    });
+  });
+</script>

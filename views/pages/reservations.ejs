@@ -1,0 +1,384 @@
+<div class="card">
+  <div class="card-header">
+    <h1 class="card-title">Gerenciar Reservas</h1>
+    <p>Criação e gerenciamento de reservas de espaços</p>
+  </div>
+
+  <!-- Barra de ações -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div class="search-container">
+      <input type="text" id="search-reservations" class="search-input" placeholder="Pesquisar reservas...">
+    </div>
+    <button class="btn btn-primary" onclick="openReservationModal()">+ Nova Reserva</button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Status:</label>
+        <select id="filter-status" class="form-control" style="width: auto;">
+          <option value="">Todos</option>
+          <option value="pending">Pendente</option>
+          <option value="confirmed">Confirmado</option>
+          <option value="cancelled">Cancelado</option>
+          <option value="completed">Concluído</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Data:</label>
+        <input type="date" id="filter-date" class="form-control" style="width: auto;">
+      </div>
+      <button class="btn btn-secondary" onclick="clearFilters()">Limpar Filtros</button>
+    </div>
+  </div>
+
+  <!-- Tabela de reservas -->
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Usuário</th>
+          <th>Espaço</th>
+          <th>Data</th>
+          <th>Horário</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="reservations-table">
+        <tr>
+          <td colspan="7" class="loading">Carregando reservas...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal para criar/editar reserva -->
+<div id="reservation-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title" id="reservation-modal-title">Nova Reserva</h2>
+      <button class="modal-close" onclick="closeReservationModal()">&times;</button>
+    </div>
+    
+    <form id="reservation-form">
+      <input type="hidden" id="reservation-id">
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="user-select">Usuário *</label>
+          <select id="user-select" class="form-control" required>
+            <option value="">Selecione o usuário</option>
+          </select>
+          <div class="form-error" id="user-select-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="space-select">Espaço *</label>
+          <select id="space-select" class="form-control" required>
+            <option value="">Selecione o espaço</option>
+          </select>
+          <div class="form-error" id="space-select-error"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reservation-date">Data da Reserva *</label>
+        <input type="date" id="reservation-date" class="form-control" required>
+        <div class="form-error" id="reservation-date-error"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="initial-hour">Horário Inicial *</label>
+          <input type="datetime-local" id="initial-hour" class="form-control" required>
+          <div class="form-error" id="initial-hour-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="final-hour">Horário Final *</label>
+          <input type="datetime-local" id="final-hour" class="form-control" required>
+          <div class="form-error" id="final-hour-error"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reservation-status">Status *</label>
+        <select id="reservation-status" class="form-control" required>
+          <option value="pending">Pendente</option>
+          <option value="confirmed">Confirmado</option>
+          <option value="cancelled">Cancelado</option>
+          <option value="completed">Concluído</option>
+        </select>
+        <div class="form-error" id="reservation-status-error"></div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeReservationModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+let reservations = [];
+let users = [];
+let spaces = [];
+let editingReservationId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadData();
+  setupSearch();
+  setupFilters();
+  setupForm();
+});
+
+async function loadData() {
+  try {
+    showLoading(document.getElementById('reservations-table'));
+    
+    // Carregar todos os dados necessários
+    [reservations, users, spaces] = await Promise.all([
+      api.getReservations(),
+      api.getUsers(),
+      api.getSpaces()
+    ]);
+    
+    populateSelects();
+    renderReservations(reservations);
+  } catch (error) {
+    console.error('Erro ao carregar dados:', error);
+    showMessage('Erro ao carregar dados', 'error');
+    document.getElementById('reservations-table').innerHTML = 
+      '<tr><td colspan="7">Erro ao carregar reservas</td></tr>';
+  }
+}
+
+function populateSelects() {
+  // Popular select de usuários
+  const userSelect = document.getElementById('user-select');
+  userSelect.innerHTML = '<option value="">Selecione o usuário</option>';
+  users.forEach(user => {
+    userSelect.innerHTML += `<option value="${user.id}">${user.username} (${user.email})</option>`;
+  });
+
+  // Popular select de espaços
+  const spaceSelect = document.getElementById('space-select');
+  spaceSelect.innerHTML = '<option value="">Selecione o espaço</option>';
+  spaces.forEach(space => {
+    spaceSelect.innerHTML += `<option value="${space.id}">${space.name} - ${space.location}</option>`;
+  });
+}
+
+function renderReservations(reservationsToRender) {
+  const tbody = document.getElementById('reservations-table');
+  
+  if (reservationsToRender.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7">Nenhuma reserva encontrada</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = reservationsToRender.map(reservation => {
+    const user = users.find(u => u.id === reservation.user_id);
+    const space = spaces.find(s => s.id === reservation.space_id);
+    
+    return `
+      <tr>
+        <td>${reservation.id}</td>
+        <td>${user ? user.username : 'N/A'}</td>
+        <td>${space ? space.name : 'N/A'}</td>
+        <td>${formatDate(reservation.reservation_date)}</td>
+        <td>${formatDateTime(reservation.initial_hour)} - ${formatDateTime(reservation.final_hour)}</td>
+        <td><span class="status ${getStatusClass(reservation.status)}">${translateStatus(reservation.status)}</span></td>
+        <td class="table-actions">
+          <button class="btn btn-sm btn-primary" onclick="editReservation(${reservation.id})">Editar</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteReservation(${reservation.id})">Excluir</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function setupSearch() {
+  const searchInput = document.getElementById('search-reservations');
+  const debouncedSearch = debounce(function(searchTerm) {
+    applyFilters();
+  }, 300);
+
+  searchInput.addEventListener('input', function() {
+    debouncedSearch(this.value);
+  });
+}
+
+function setupFilters() {
+  document.getElementById('filter-status').addEventListener('change', applyFilters);
+  document.getElementById('filter-date').addEventListener('change', applyFilters);
+}
+
+function applyFilters() {
+  const searchTerm = document.getElementById('search-reservations').value.toLowerCase();
+  const statusFilter = document.getElementById('filter-status').value;
+  const dateFilter = document.getElementById('filter-date').value;
+
+  let filteredReservations = reservations.filter(reservation => {
+    const user = users.find(u => u.id === reservation.user_id);
+    const space = spaces.find(s => s.id === reservation.space_id);
+    
+    // Filtro de pesquisa
+    const matchesSearch = !searchTerm || 
+      (user && user.username.toLowerCase().includes(searchTerm)) ||
+      (space && space.name.toLowerCase().includes(searchTerm)) ||
+      reservation.id.toString().includes(searchTerm);
+    
+    // Filtro de status
+    const matchesStatus = !statusFilter || reservation.status === statusFilter;
+    
+    // Filtro de data
+    const matchesDate = !dateFilter || 
+      formatDateForInput(reservation.reservation_date) === dateFilter;
+    
+    return matchesSearch && matchesStatus && matchesDate;
+  });
+
+  renderReservations(filteredReservations);
+}
+
+function clearFilters() {
+  document.getElementById('search-reservations').value = '';
+  document.getElementById('filter-status').value = '';
+  document.getElementById('filter-date').value = '';
+  renderReservations(reservations);
+}
+
+function setupForm() {
+  document.getElementById('reservation-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    await saveReservation();
+  });
+}
+
+function openReservationModal(reservationId = null) {
+  editingReservationId = reservationId;
+  const modal = document.getElementById('reservation-modal');
+  const title = document.getElementById('reservation-modal-title');
+
+  if (reservationId) {
+    title.textContent = 'Editar Reserva';
+    const reservation = reservations.find(r => r.id === reservationId);
+    if (reservation) {
+      document.getElementById('reservation-id').value = reservation.id;
+      document.getElementById('user-select').value = reservation.user_id;
+      document.getElementById('space-select').value = reservation.space_id;
+      document.getElementById('reservation-date').value = formatDateForInput(reservation.reservation_date);
+      document.getElementById('initial-hour').value = formatDateTimeForInput(reservation.initial_hour);
+      document.getElementById('final-hour').value = formatDateTimeForInput(reservation.final_hour);
+      document.getElementById('reservation-status').value = reservation.status;
+    }
+  } else {
+    title.textContent = 'Nova Reserva';
+    document.getElementById('reservation-form').reset();
+    document.getElementById('reservation-id').value = '';
+    document.getElementById('reservation-status').value = 'pending';
+  }
+
+  clearFormErrors();
+  modal.classList.add('show');
+}
+
+function closeReservationModal() {
+  document.getElementById('reservation-modal').classList.remove('show');
+  editingReservationId = null;
+}
+
+function clearFormErrors() {
+  const errorElements = document.querySelectorAll('.form-error');
+  errorElements.forEach(el => el.textContent = '');
+
+  const formControls = document.querySelectorAll('.form-control');
+  formControls.forEach(el => {
+    el.classList.remove('is-invalid', 'is-valid');
+  });
+}
+
+async function saveReservation() {
+  const formData = {
+    user_id: parseInt(document.getElementById('user-select').value),
+    space_id: parseInt(document.getElementById('space-select').value),
+    reservation_date: document.getElementById('reservation-date').value,
+    initial_hour: document.getElementById('initial-hour').value,
+    final_hour: document.getElementById('final-hour').value,
+    status: document.getElementById('reservation-status').value
+  };
+
+  // Validação
+  const errors = [];
+
+  if (!formData.user_id) errors.push('Usuário é obrigatório');
+  if (!formData.space_id) errors.push('Espaço é obrigatório');
+  if (!formData.reservation_date) errors.push('Data da reserva é obrigatória');
+  if (!formData.initial_hour) errors.push('Horário inicial é obrigatório');
+  if (!formData.final_hour) errors.push('Horário final é obrigatório');
+  if (!formData.status) errors.push('Status é obrigatório');
+
+  // Validar se horário final é posterior ao inicial
+  if (formData.initial_hour && formData.final_hour) {
+    if (new Date(formData.initial_hour) >= new Date(formData.final_hour)) {
+      errors.push('Horário final deve ser posterior ao horário inicial');
+    }
+  }
+
+  if (errors.length > 0) {
+    errors.forEach(error => {
+      showMessage(error, 'error');
+    });
+    return;
+  }
+
+  try {
+    if (editingReservationId) {
+      await api.updateReservation(editingReservationId, formData);
+      showMessage('Reserva atualizada com sucesso!', 'success');
+    } else {
+      await api.createReservation(formData);
+      showMessage('Reserva criada com sucesso!', 'success');
+    }
+
+    closeReservationModal();
+    await loadData();
+  } catch (error) {
+    console.error('Erro ao salvar reserva:', error);
+    showMessage('Erro ao salvar reserva: ' + error.message, 'error');
+  }
+}
+
+function editReservation(reservationId) {
+  openReservationModal(reservationId);
+}
+
+async function deleteReservation(reservationId) {
+  if (!confirmAction('Tem certeza que deseja excluir esta reserva?')) {
+    return;
+  }
+
+  try {
+    await api.deleteReservation(reservationId);
+    showMessage('Reserva excluída com sucesso!', 'success');
+    await loadData();
+  } catch (error) {
+    console.error('Erro ao excluir reserva:', error);
+    showMessage('Erro ao excluir reserva: ' + error.message, 'error');
+  }
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('reservation-modal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeReservationModal();
+  }
+});
+</script>
+</script>

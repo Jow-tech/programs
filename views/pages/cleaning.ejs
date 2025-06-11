@@ -1,0 +1,387 @@
+<div class="card">
+  <div class="card-header">
+    <h1 class="card-title">Controle de Limpeza</h1>
+    <p>Gerenciamento de agendamentos de limpeza após reservas</p>
+  </div>
+
+  <!-- Barra de ações -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <div class="search-container">
+      <input type="text" id="search-cleanings" class="search-input" placeholder="Pesquisar limpezas...">
+    </div>
+    <button class="btn btn-primary" onclick="openCleaningModal()">+ Novo Agendamento</button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card" style="margin-bottom: 1.5rem;">
+    <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Status:</label>
+        <select id="filter-status" class="form-control" style="width: auto;">
+          <option value="">Todos</option>
+          <option value="pending">Pendente</option>
+          <option value="in_progress">Em Andamento</option>
+          <option value="completed">Concluído</option>
+          <option value="cancelled">Cancelado</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="form-label">Data:</label>
+        <input type="date" id="filter-date" class="form-control" style="width: auto;">
+      </div>
+      <button class="btn btn-secondary" onclick="clearFilters()">Limpar Filtros</button>
+    </div>
+  </div>
+
+  <!-- Tabela de limpezas -->
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Reserva</th>
+          <th>Espaço</th>
+          <th>Funcionário</th>
+          <th>Data da Limpeza</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="cleanings-table">
+        <tr>
+          <td colspan="7" class="loading">Carregando agendamentos...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal para criar/editar agendamento -->
+<div id="cleaning-modal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title" id="cleaning-modal-title">Novo Agendamento</h2>
+      <button class="modal-close" onclick="closeCleaningModal()">&times;</button>
+    </div>
+    
+    <form id="cleaning-form">
+      <input type="hidden" id="cleaning-id">
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="reservation-select">Reserva *</label>
+          <select id="reservation-select" class="form-control" required>
+            <option value="">Selecione a reserva</option>
+          </select>
+          <div class="form-error" id="reservation-select-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="space-select">Espaço *</label>
+          <select id="space-select" class="form-control" required>
+            <option value="">Selecione o espaço</option>
+          </select>
+          <div class="form-error" id="space-select-error"></div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="employee-select">Funcionário *</label>
+          <select id="employee-select" class="form-control" required>
+            <option value="">Selecione o funcionário</option>
+          </select>
+          <div class="form-error" id="employee-select-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="cleaning-date">Data da Limpeza *</label>
+          <input type="date" id="cleaning-date" class="form-control" required>
+          <div class="form-error" id="cleaning-date-error"></div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="cleaning-status">Status *</label>
+        <select id="cleaning-status" class="form-control" required>
+          <option value="pending">Pendente</option>
+          <option value="in_progress">Em Andamento</option>
+          <option value="completed">Concluído</option>
+          <option value="cancelled">Cancelado</option>
+        </select>
+        <div class="form-error" id="cleaning-status-error"></div>
+      </div>
+
+      <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeCleaningModal()">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+let cleanings = [];
+let reservations = [];
+let spaces = [];
+let employees = [];
+let users = [];
+let editingCleaningId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+  loadData();
+  setupSearch();
+  setupFilters();
+  setupForm();
+});
+
+async function loadData() {
+  try {
+    showLoading(document.getElementById('cleanings-table'));
+    
+    // Carregar todos os dados necessários
+    [cleanings, reservations, spaces, employees, users] = await Promise.all([
+      api.getCleanings(),
+      api.getReservations(),
+      api.getSpaces(),
+      api.getEmployees(),
+      api.getUsers()
+    ]);
+    
+    populateSelects();
+    renderCleanings(cleanings);
+  } catch (error) {
+    console.error('Erro ao carregar dados:', error);
+    showMessage('Erro ao carregar dados', 'error');
+    document.getElementById('cleanings-table').innerHTML = 
+      '<tr><td colspan="7">Erro ao carregar agendamentos</td></tr>';
+  }
+}
+
+function populateSelects() {
+  // Popular select de reservas
+  const reservationSelect = document.getElementById('reservation-select');
+  reservationSelect.innerHTML = '<option value="">Selecione a reserva</option>';
+  reservations.forEach(reservation => {
+    const user = users.find(u => u.id === reservation.user_id);
+    const space = spaces.find(s => s.id === reservation.space_id);
+    reservationSelect.innerHTML += `<option value="${reservation.id}">
+      #${reservation.id} - ${user ? user.username : 'N/A'} - ${space ? space.name : 'N/A'}
+    </option>`;
+  });
+
+  // Popular select de espaços
+  const spaceSelect = document.getElementById('space-select');
+  spaceSelect.innerHTML = '<option value="">Selecione o espaço</option>';
+  spaces.forEach(space => {
+    spaceSelect.innerHTML += `<option value="${space.id}">${space.name} - ${space.location}</option>`;
+  });
+
+  // Popular select de funcionários
+  const employeeSelect = document.getElementById('employee-select');
+  employeeSelect.innerHTML = '<option value="">Selecione o funcionário</option>';
+  employees.forEach(employee => {
+    employeeSelect.innerHTML += `<option value="${employee.id}">${employee.name} (${employee.role})</option>`;
+  });
+}
+
+function renderCleanings(cleaningsToRender) {
+  const tbody = document.getElementById('cleanings-table');
+  
+  if (cleaningsToRender.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7">Nenhum agendamento encontrado</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = cleaningsToRender.map(cleaning => {
+    const reservation = reservations.find(r => r.id === cleaning.reservation_id);
+    const space = spaces.find(s => s.id === cleaning.space_id);
+    const employee = employees.find(e => e.id === cleaning.employee_id);
+    
+    return `
+      <tr>
+        <td>${cleaning.id}</td>
+        <td>#${cleaning.reservation_id}</td>
+        <td>${space ? space.name : 'N/A'}</td>
+        <td>${employee ? employee.name : 'N/A'}</td>
+        <td>${formatDate(cleaning.cleaning_date)}</td>
+        <td><span class="status ${getStatusClass(cleaning.status)}">${translateStatus(cleaning.status)}</span></td>
+        <td class="table-actions">
+          <button class="btn btn-sm btn-primary" onclick="editCleaning(${cleaning.id})">Editar</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteCleaning(${cleaning.id})">Excluir</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function setupSearch() {
+  const searchInput = document.getElementById('search-cleanings');
+  const debouncedSearch = debounce(function(searchTerm) {
+    applyFilters();
+  }, 300);
+
+  searchInput.addEventListener('input', function() {
+    debouncedSearch(this.value);
+  });
+}
+
+function setupFilters() {
+  document.getElementById('filter-status').addEventListener('change', applyFilters);
+  document.getElementById('filter-date').addEventListener('change', applyFilters);
+}
+
+function applyFilters() {
+  const searchTerm = document.getElementById('search-cleanings').value.toLowerCase();
+  const statusFilter = document.getElementById('filter-status').value;
+  const dateFilter = document.getElementById('filter-date').value;
+
+  let filteredCleanings = cleanings.filter(cleaning => {
+    const space = spaces.find(s => s.id === cleaning.space_id);
+    const employee = employees.find(e => e.id === cleaning.employee_id);
+    
+    // Filtro de pesquisa
+    const matchesSearch = !searchTerm || 
+      cleaning.id.toString().includes(searchTerm) ||
+      cleaning.reservation_id.toString().includes(searchTerm) ||
+      (space && space.name.toLowerCase().includes(searchTerm)) ||
+      (employee && employee.name.toLowerCase().includes(searchTerm));
+    
+    // Filtro de status
+    const matchesStatus = !statusFilter || cleaning.status === statusFilter;
+    
+    // Filtro de data
+    const matchesDate = !dateFilter || 
+      formatDateForInput(cleaning.cleaning_date) === dateFilter;
+    
+    return matchesSearch && matchesStatus && matchesDate;
+  });
+
+  renderCleanings(filteredCleanings);
+}
+
+function clearFilters() {
+  document.getElementById('search-cleanings').value = '';
+  document.getElementById('filter-status').value = '';
+  document.getElementById('filter-date').value = '';
+  renderCleanings(cleanings);
+}
+
+function setupForm() {
+  document.getElementById('cleaning-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    await saveCleaning();
+  });
+}
+
+function openCleaningModal(cleaningId = null) {
+  editingCleaningId = cleaningId;
+  const modal = document.getElementById('cleaning-modal');
+  const title = document.getElementById('cleaning-modal-title');
+
+  if (cleaningId) {
+    title.textContent = 'Editar Agendamento';
+    const cleaning = cleanings.find(c => c.id === cleaningId);
+    if (cleaning) {
+      document.getElementById('cleaning-id').value = cleaning.id;
+      document.getElementById('reservation-select').value = cleaning.reservation_id;
+      document.getElementById('space-select').value = cleaning.space_id;
+      document.getElementById('employee-select').value = cleaning.employee_id;
+      document.getElementById('cleaning-date').value = formatDateForInput(cleaning.cleaning_date);
+      document.getElementById('cleaning-status').value = cleaning.status;
+    }
+  } else {
+    title.textContent = 'Novo Agendamento';
+    document.getElementById('cleaning-form').reset();
+    document.getElementById('cleaning-id').value = '';
+    document.getElementById('cleaning-status').value = 'pending';
+  }
+
+  clearFormErrors();
+  modal.classList.add('show');
+}
+
+function closeCleaningModal() {
+  document.getElementById('cleaning-modal').classList.remove('show');
+  editingCleaningId = null;
+}
+
+function clearFormErrors() {
+  const errorElements = document.querySelectorAll('.form-error');
+  errorElements.forEach(el => el.textContent = '');
+
+  const formControls = document.querySelectorAll('.form-control');
+  formControls.forEach(el => {
+    el.classList.remove('is-invalid', 'is-valid');
+  });
+}
+
+async function saveCleaning() {
+  const formData = {
+    reservation_id: parseInt(document.getElementById('reservation-select').value),
+    space_id: parseInt(document.getElementById('space-select').value),
+    employee_id: parseInt(document.getElementById('employee-select').value),
+    cleaning_date: document.getElementById('cleaning-date').value,
+    status: document.getElementById('cleaning-status').value
+  };
+
+  // Validação
+  const errors = [];
+
+  if (!formData.reservation_id) errors.push('Reserva é obrigatória');
+  if (!formData.space_id) errors.push('Espaço é obrigatório');
+  if (!formData.employee_id) errors.push('Funcionário é obrigatório');
+  if (!formData.cleaning_date) errors.push('Data da limpeza é obrigatória');
+  if (!formData.status) errors.push('Status é obrigatório');
+
+  if (errors.length > 0) {
+    errors.forEach(error => {
+      showMessage(error, 'error');
+    });
+    return;
+  }
+
+  try {
+    if (editingCleaningId) {
+      await api.updateCleaning(editingCleaningId, formData);
+      showMessage('Agendamento atualizado com sucesso!', 'success');
+    } else {
+      await api.createCleaning(formData);
+      showMessage('Agendamento criado com sucesso!', 'success');
+    }
+
+    closeCleaningModal();
+    await loadData();
+  } catch (error) {
+    console.error('Erro ao salvar agendamento:', error);
+    showMessage('Erro ao salvar agendamento: ' + error.message, 'error');
+  }
+}
+
+function editCleaning(cleaningId) {
+  openCleaningModal(cleaningId);
+}
+
+async function deleteCleaning(cleaningId) {
+  if (!confirmAction('Tem certeza que deseja excluir este agendamento?')) {
+    return;
+  }
+
+  try {
+    await api.deleteCleaning(cleaningId);
+    showMessage('Agendamento excluído com sucesso!', 'success');
+    await loadData();
+  } catch (error) {
+    console.error('Erro ao excluir agendamento:', error);
+    showMessage('Erro ao excluir agendamento: ' + error.message, 'error');
+  }
+}
+
+// Fechar modal ao clicar fora
+document.getElementById('cleaning-modal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeCleaningModal();
+  }
+});
+</script>
+</script>
